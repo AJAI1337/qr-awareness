@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+.dev.vars
+*.zip
+*.sqlite*
+*-proof.png
+repository-created.png
+.local-state/
+publish/

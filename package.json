@@ -1,0 +1,11 @@
+{
+  "name": "qr-awareness",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node local-server.mjs",
+    "test": "node --test backend/test.mjs backend/integration.test.mjs"
+  },
+  "devDependencies": {"wrangler": "4.50.0", "qrcode": "1.5.4"}
+}
