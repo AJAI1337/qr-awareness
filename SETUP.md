@@ -73,14 +73,14 @@ Open the dashboard on the presenter's laptop. Log in before projecting. Use Pres
 
 The crowd sees anonymous device activity and aggregate statistics only. The draw reveals a claim code; the winner shows their screenshot to collect the actual shirt. No contact details are needed. There is no claim that scanning alone revealed names or hacked devices.
 
-The backend stores the raw user agent requested for the demonstration, available model, random session ID, poster source, timestamps, and entry choices. It does not store IP addresses; Cloudflare/GitHub may maintain operational logs. The entry page discloses limited collection and the awareness activity. No cookie fingerprinting or GPS collection is used.
+The backend stores the raw user agent, available model, random session ID, poster source, timestamps, submitted name and preferred size. Winner delivery details are stored separately for private fulfilment. It does not store IP addresses; Cloudflare/GitHub may maintain operational logs. The entry page discloses limited collection and the awareness activity. No cookie fingerprinting or GPS collection is used.
 
 ## 7. Clear rehearsal data / delete event data
 
 After the event, within the 7-day period promised on the page, delete the records. This permanently clears the current event, including the saved winner. Run in `backend/`:
 
 ```powershell
-npx wrangler d1 execute qr-awareness --remote --command="DELETE FROM winner; DELETE FROM entries; DELETE FROM visits;"
+npx wrangler d1 execute qr-awareness --remote --command="DELETE FROM shipping; DELETE FROM winner; DELETE FROM entries; DELETE FROM visits;"
 ```
 
 This is a manual deletion step, not an automatic retention job. Also disable the Worker after the event in the Cloudflare dashboard so it stops accepting new visits/entries. Keep each event in a separate database if you reuse this app.
@@ -88,4 +88,11 @@ This is a manual deletion step, not an automatic retention job. Also disable the
 ## Checks
 
 Run `node --test backend/test.mjs` from the project root. These checks cover authentication, cross-origin rejection, invalid input, and device-label fallbacks. Full database integration and real-device QR checks must be completed after account setup.
+
+
+## Redesigned entry and winner shipping
+Name is mandatory; favourite team is no longer collected. Name and size are stored for the draw. Private organiser details show the entered name alongside user agent and available model. Presentation mode hides this private table and all shipping details. A short, explicit notice remains on the entry form.
+The winner uses claim.html in the same browser session with their claim code. Only the winning session can submit a delivery address after consenting. The organiser can view that address privately under Winner shipping. Delete shipping records before deleting entries, and delete all event records within the stated seven-day period. Shipping details must never be projected.
+The shirt image is AI-generated concept artwork. Use a photo of the actual prize before printing if exact design matters.
+
 

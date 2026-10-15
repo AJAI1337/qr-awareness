@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "node local-server.mjs",
-    "test": "node --test backend/test.mjs backend/integration.test.mjs"
+    "test": "node --test backend/test.mjs backend/integration.test.mjs backend/shipping.test.mjs"
   },
-  "devDependencies": {"wrangler": "4.50.0", "qrcode": "1.5.4"}
+  "devDependencies": {
+    "wrangler": "4.50.0",
+    "qrcode": "1.5.4"
+  }
 }
