@@ -1,6 +1,14 @@
 # QR awareness giveaway
 
-The app is prepared for GitHub Pages + Cloudflare Workers/D1. It is not deployed yet. No credentials belong in this repository. The only public configuration is `docs/config.js` and the allowed website origin.
+The app is deployed on GitHub Pages + Cloudflare Workers/D1. No credentials belong in this repository. The public configuration is `docs/config.js` and the allowed website origin. The steps below also explain how to recreate the deployment.
+
+Live entry: https://ajai1337.github.io/qr-awareness/
+
+Presenter dashboard: https://ajai1337.github.io/qr-awareness/dashboard.html
+
+Print-ready A5 layout with real location QR codes: https://ajai1337.github.io/qr-awareness/poster.html
+
+The original ElevenLabs concepts remain available in the linked flow below; the print page uses a separate racing shirt illustration, labelled as a concept. Confirm the actual prize design, organiser name, and draw timing before the event. There is no automatic event schedule or deletion job.
 
 ## 1. Preview first
 
@@ -55,7 +63,7 @@ The artwork has a reserved QR area; any AI-generated patterns are NOT usable QR 
 - `https://YOUR-USERNAME.github.io/qr-awareness/?source=registration`
 - `https://YOUR-USERNAME.github.io/qr-awareness/?source=seating`
 
-The final A5 layout and working QR overlay are still pending the public URL. Use a minimum 30 mm QR width, dark modules on white, with its quiet zone preserved. Test a printed copy on iPhone and Android from normal viewing distance before scattering posters. Never encode the dashboard URL or password.
+The A5 print page now includes real QR codes for the final URLs above. Use a minimum 30 mm QR width, dark modules on white, with its quiet zone preserved. Test a printed copy on iPhone and Android from normal viewing distance before scattering posters. Never encode the dashboard URL or password.
 
 Before the event: verify a phone visit appears on the dashboard; submit and screenshot its claim code; reload and submit again to verify it does not create another entry within that browser session. Try wrong dashboard credentials. Test the winner draw only with rehearsal data, then clear the database below. Clicking Draw a winner persists one winner and closes entries; subsequent clicks return the same winner.
 
@@ -63,7 +71,7 @@ Before the event: verify a phone visit appears on the dashboard; submit and scre
 
 Open the dashboard on the presenter's laptop. Log in before projecting. Use Presentation view. Show visits versus entries, device information, and poster sources. Explain that a scan which never opened the page cannot be counted. The app counts random browser sessions, not people: another tab/browser or clearing session data can create another session. It does not guarantee one entry per person. Browser details are self-reported and models are often unavailable. Direct links and preview bots can also affect visit counts. CORS is not bot protection; this is an event demo, not a high-value public contest platform.
 
-The crowd sees aggregates only. The draw reveals a claim code; the winner shows their screenshot to collect the actual shirt. No contact details are needed. There is no claim that scanning alone revealed names or hacked devices.
+The crowd sees anonymous device activity and aggregate statistics only. The draw reveals a claim code; the winner shows their screenshot to collect the actual shirt. No contact details are needed. There is no claim that scanning alone revealed names or hacked devices.
 
 The backend stores the raw user agent requested for the demonstration, available model, random session ID, poster source, timestamps, and entry choices. It does not store IP addresses; Cloudflare/GitHub may maintain operational logs. The entry page discloses limited collection and the awareness activity. No cookie fingerprinting or GPS collection is used.
 
@@ -80,3 +88,4 @@ This is a manual deletion step, not an automatic retention job. Also disable the
 ## Checks
 
 Run `node --test backend/test.mjs` from the project root. These checks cover authentication, cross-origin rejection, invalid input, and device-label fallbacks. Full database integration and real-device QR checks must be completed after account setup.
+

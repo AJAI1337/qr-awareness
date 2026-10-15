@@ -8,7 +8,9 @@ A mobile entry page and protected presenter dashboard for a real event giveaway 
 - Random claim codes identify the winner without email or phone collection.
 - Presentation mode, sample mode, authenticated live statistics, and one saved winner draw.
 
-**Status:** backend configuration is required before accepting live entries. An empty API URL deliberately fails closed. Sample results are clearly labelled.
+**Deployed:** [Giveaway page](https://ajai1337.github.io/qr-awareness/) · [Presenter dashboard](https://ajai1337.github.io/qr-awareness/dashboard.html) · [Print A5 posters](https://ajai1337.github.io/qr-awareness/poster.html)
+
+Cloudflare API is connected. Sample results are clearly labelled. The presenter password is stored separately as a Cloudflare secret; it is never in this repository.
 
 ## Local rehearsal (Node 24+)
 
