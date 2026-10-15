@@ -6,13 +6,20 @@ export default {async fetch(req,env){
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
  const path=new URL(req.url).pathname;
  try{
- if(['/stats','/draw'].includes(path)){
+ if(['/stats','/draw','/attendees','/fulfilment'].includes(path)){
   if(!env.ADMIN_TOKEN||req.headers.get('Authorization')!=='Bearer '+env.ADMIN_TOKEN)return reply({error:'Incorrect dashboard password.'},401);
+  if(path==='/attendees'&&req.method==='GET'){
+   const rows=await env.DB.prepare('SELECT e.nickname AS name,e.size,v.ua,v.model,v.source,v.created_at AS time,CASE WHEN e.sid IS NULL THEN 0 ELSE 1 END AS completed FROM visits v LEFT JOIN entries e ON e.sid=v.sid ORDER BY v.created_at DESC,v.rowid DESC LIMIT 500').all();
+   return reply({attendees:rows.results});
+  }
+  if(path==='/fulfilment'&&req.method==='GET'){
+   const row=await env.DB.prepare('SELECT recipient,address,city,region,postcode,country,created_at FROM shipping LIMIT 1').first();return reply({shipping:row});
+  }
   if(path==='/stats'&&req.method==='GET'){
    const [v,e,m,rows,sources,teams,sizes,timeline,recent,winner]=await env.DB.batch([
     env.DB.prepare('SELECT COUNT(*) AS n FROM visits'),env.DB.prepare('SELECT COUNT(*) AS n FROM entries'),env.DB.prepare("SELECT COUNT(*) AS n FROM visits WHERE model != 'Unavailable'"),env.DB.prepare('SELECT ua, model, COUNT(*) AS count FROM visits GROUP BY ua, model'),env.DB.prepare('SELECT source AS label, COUNT(*) AS count FROM visits GROUP BY source ORDER BY count DESC'),env.DB.prepare('SELECT team AS label, COUNT(*) AS count FROM entries GROUP BY team ORDER BY count DESC'),env.DB.prepare('SELECT size AS label, COUNT(*) AS count FROM entries GROUP BY size ORDER BY count DESC'),env.DB.prepare("SELECT strftime('%Y-%m-%dT%H:%M:00Z', created_at) AS minute, COUNT(*) AS count FROM visits GROUP BY minute ORDER BY minute DESC LIMIT 60"),env.DB.prepare('SELECT ua,model,source,created_at FROM visits ORDER BY created_at DESC,rowid DESC LIMIT 12'),env.DB.prepare('SELECT claim FROM winner WHERE id=1')]);
    const groups=new Map();for(const r of rows.results){const label=classify(r.ua,r.model);groups.set(label,(groups.get(label)||0)+r.count)}
-   return reply({visits:v.results[0].n,entries:e.results[0].n,models:m.results[0].n,devices:[...groups].map(([label,count])=>({label,count})).sort((a,b)=>b.count-a.count),sources:sources.results,teams:teams.results,sizes:sizes.results,timeline:timeline.results.reverse(),recent:recent.results.map(r=>({device:classify(r.ua,r.model),source:r.source,time:r.created_at})),winner:winner.results[0]?.claim||null});
+   return reply({visits:v.results[0].n,entries:e.results[0].n,notFilled:v.results[0].n-e.results[0].n,models:m.results[0].n,devices:[...groups].map(([label,count])=>({label,count})).sort((a,b)=>b.count-a.count),sources:sources.results,sizes:sizes.results,timeline:timeline.results.reverse(),recent:recent.results.map(r=>({device:classify(r.ua,r.model),source:r.source,time:r.created_at})),winner:winner.results[0]?.claim||null});
   }
   if(path==='/draw'&&req.method==='POST'){
    // One persisted winner: refreshing or clicking twice cannot quietly redraw.
@@ -20,24 +27,35 @@ export default {async fetch(req,env){
    const row=await env.DB.prepare('SELECT claim FROM winner WHERE id=1').first();return row?reply(row):reply({error:'No entries yet.'},409);
   }
  }
- if(req.method!=='POST'||!['/visit','/entry'].includes(path))return reply({error:'Not found'},404);
+ if(req.method!=='POST'||!['/visit','/entry','/claim-status','/shipping'].includes(path))return reply({error:'Not found'},404);
  if(req.headers.get('Origin')!==env.ALLOWED_ORIGIN)return reply({error:'Origin not allowed'},403);
  if(Number(req.headers.get('Content-Length')||0)>4096)return reply({error:'Request too large'},413);
  const raw=await req.text();if(raw.length>4096)return reply({error:'Request too large'},413);
  let d;try{d=JSON.parse(raw)}catch{return reply({error:'Invalid JSON'},400)}
  if(!d||!sidOK(d.sid))return reply({error:'Invalid session'},400);
+ if(['/claim-status','/shipping'].includes(path)){
+  if(typeof d.claim!=='string'||!/^[A-F0-9]{16}$/.test(d.claim))return reply({error:'Enter your saved claim code.'},400);
+  const entry=await env.DB.prepare('SELECT claim FROM entries WHERE sid=? AND claim=?').bind(d.sid,d.claim).first();
+  if(!entry)return reply({error:'Use the same browser session that entered the draw, with your saved claim code.'},403);
+  const winner=await env.DB.prepare('SELECT claim FROM winner WHERE id=1').first();const won=winner?.claim===d.claim;
+  if(path==='/claim-status')return reply({drawn:!!winner,winner:won});
+  if(!won)return reply({error:'Shipping is only available to the confirmed winner.'},403);
+  const fields=['recipient','address','city','region','postcode','country'];const limits=[80,500,80,80,20,80];
+  if(d.consent!==true||fields.some((key,i)=>typeof d[key]!=='string'||!d[key].trim()||d[key].length>limits[i]))return reply({error:'Complete the delivery details and consent checkbox.'},400);
+  await env.DB.prepare('INSERT INTO shipping(sid,recipient,address,city,region,postcode,country) VALUES(?,?,?,?,?,?,?) ON CONFLICT(sid) DO UPDATE SET recipient=excluded.recipient,address=excluded.address,city=excluded.city,region=excluded.region,postcode=excluded.postcode,country=excluded.country').bind(d.sid,...fields.map(key=>d[key].trim())).run();return reply({ok:true});
+ }
  if(path==='/visit'){
   if(typeof d.source!=='string'||! /^[a-zA-Z0-9_-]{1,40}$/.test(d.source)||typeof d.ua!=='string'||d.ua.length>500||typeof d.model!=='string'||d.model.length>100)return reply({error:'Invalid visit'},400);
   await env.DB.prepare('INSERT OR IGNORE INTO visits(sid,source,ua,model) VALUES(?,?,?,?)').bind(d.sid,d.source,d.ua,d.model.trim()||'Unavailable').run();return reply({ok:true});
  }
- const teams=['Mercedes','Ferrari','McLaren','Red Bull','Other / no preference'],sizes=['XS','S','M','L','XL','XXL'];
- if(d.consent!==true||typeof d.nickname!=='string'||d.nickname.length>30||!teams.includes(d.team)||!sizes.includes(d.size))return reply({error:'Please complete the form and consent checkbox.'},400);
+ const name=d.name??d.nickname,sizes=['XS','S','M','L','XL','XXL'];
+ if(d.consent!==true||typeof name!=='string'||!name.trim()||name.length>80||!sizes.includes(d.size))return reply({error:'Please enter your name, choose a size and agree to enter.'},400);
  if(!await env.DB.prepare('SELECT sid FROM visits WHERE sid=?').bind(d.sid).first())return reply({error:'Visit not registered. Reload and try again.'},409);
  const existing=await env.DB.prepare('SELECT claim FROM entries WHERE sid=?').bind(d.sid).first();
  if(existing)return reply(existing);
  if(await env.DB.prepare('SELECT id FROM winner WHERE id=1').first())return reply({error:'The draw has closed.'},409);
  const claim=crypto.randomUUID().replaceAll('-','').slice(0,16).toUpperCase();
- await env.DB.prepare('INSERT OR IGNORE INTO entries(sid,nickname,team,size,claim) SELECT ?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM winner WHERE id=1)').bind(d.sid,d.nickname.trim(),d.team,d.size,claim).run();
+ await env.DB.prepare('INSERT OR IGNORE INTO entries(sid,nickname,team,size,claim) SELECT ?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM winner WHERE id=1)').bind(d.sid,name.trim(),'',d.size,claim).run();
  const entry=await env.DB.prepare('SELECT claim FROM entries WHERE sid=?').bind(d.sid).first();
  return entry?reply(entry):reply({error:'The draw has closed.'},409);
  }catch{return reply({error:'Service unavailable. Please try again shortly.'},500)}
