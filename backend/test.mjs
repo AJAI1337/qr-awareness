@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import worker,{classify} from './worker.mjs';
+const env={ALLOWED_ORIGIN:'https://example.github.io',ADMIN_TOKEN:'test-secret',DB:{prepare(){throw Error('Database must not be touched for rejected requests')}}};
+test('protect aggregate dashboard and winner endpoints',async()=>{for(const path of ['/stats','/draw']){const r=await worker.fetch(new Request('https://api.example'+path),env);assert.equal(r.status,401)}});
+test('reject cross-origin collection',async()=>{const r=await worker.fetch(new Request('https://api.example/visit',{method:'POST',headers:{Origin:'https://untrusted.example'},body:'{}'}),env);assert.equal(r.status,403)});
+test('reject malformed sessions and entries before touching database',async()=>{for(const body of ['not json','null','{}',JSON.stringify({sid:crypto.randomUUID(),consent:false,nickname:'',team:'Mercedes',size:'M'})]){const r=await worker.fetch(new Request('https://api.example/entry',{method:'POST',headers:{Origin:env.ALLOWED_ORIGIN},body}),env);assert.equal(r.status,400)}});
+test('classify iPhone and Android without inventing exact models',()=>{assert.equal(classify('iPhone Safari','Unavailable'),'iOS · Safari · model unavailable');assert.equal(classify('Android Chrome','Pixel 8'),'Android · Chrome · Pixel 8')});

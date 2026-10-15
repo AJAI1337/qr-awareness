@@ -1,0 +1,9 @@
+name = "qr-awareness-api"
+main = "worker.mjs"
+compatibility_date = "2026-10-15"
+[vars]
+ALLOWED_ORIGIN = "https://ajai1337.github.io"
+[[d1_databases]]
+binding = "DB"
+database_name = "qr-awareness"
+database_id = "e1b45047-b101-4c0b-9945-20be6fd989f9"
