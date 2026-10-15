@@ -14,11 +14,17 @@ Cloudflare API is connected. Sample results are clearly labelled. The presenter 
 
 ## Local rehearsal (Node 24+)
 
-Run `node local-server.mjs` from this folder, then open the local links it prints. Use its temporary dashboard password. Data stays in memory and disappears when the server stops. This exercises the same backend handler as production, using SQLite locally.
+Run 
+ode local-server.mjs` from this folder, then open the local links it prints. Use its temporary dashboard password. Data stays in memory and disappears when the server stops. This exercises the same backend handler as production, using SQLite locally.
 
 ## Verify
 
-`node --test backend/test.mjs backend/integration.test.mjs backend/shipping.test.mjs`
+
+ode --test backend/test.mjs backend/integration.test.mjs backend/shipping.test.mjs`
 
 See [SETUP.md](SETUP.md) for deployment, the event checklist, data deletion, and measurement limits. Never commit credentials, database files, or attendee data.
+
+
+The campaign uses the actual supplied purple Mercedes shirt photo. The protected dashboard supports a complete CSV export (shipping excluded) and a typed-confirmation permanent event reset. Live records were preserved during development.
+
 

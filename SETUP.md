@@ -8,7 +8,7 @@ Presenter dashboard: https://ajai1337.github.io/qr-awareness/dashboard.html
 
 Print-ready A5 layout with real location QR codes: https://ajai1337.github.io/qr-awareness/poster.html
 
-The original ElevenLabs concepts remain available in the linked flow below; the print page uses a separate racing shirt illustration, labelled as a concept. Confirm the actual prize design, organiser name, and draw timing before the event. There is no automatic event schedule or deletion job.
+The entry page and all location posters use the supplied actual purple/turquoise Mercedes prize photo. Confirm the organiser name and draw timing before the event. There is no automatic event schedule or deletion job.
 
 ## 1. Preview first
 
@@ -87,12 +87,21 @@ This is a manual deletion step, not an automatic retention job. Also disable the
 
 ## Checks
 
-Run `node --test backend/test.mjs` from the project root. These checks cover authentication, cross-origin rejection, invalid input, and device-label fallbacks. Full database integration and real-device QR checks must be completed after account setup.
+Run 
+ode --test backend/test.mjs` from the project root. These checks cover authentication, cross-origin rejection, invalid input, and device-label fallbacks. Full database integration and real-device QR checks must be completed after account setup.
 
 
 ## Redesigned entry and winner shipping
 Name is mandatory; favourite team is no longer collected. Name and size are stored for the draw. Private organiser details show the entered name alongside user agent and available model. Presentation mode hides this private table and all shipping details. A short, explicit notice remains on the entry form.
 The winner uses claim.html in the same browser session with their claim code. Only the winning session can submit a delivery address after consenting. The organiser can view that address privately under Winner shipping. Delete shipping records before deleting entries, and delete all event records within the stated seven-day period. Shipping details must never be projected.
-The shirt image is AI-generated concept artwork. Use a photo of the actual prize before printing if exact design matters.
+The shirt photo is the actual prize supplied by the organiser.
+
+
+
+## Event export and reset
+The private organiser dashboard offers Export event CSV. It downloads every visit, including those without entries, with name/size when submitted and browser/device details. Delivery addresses are excluded. Keep the downloaded file private. CSV formula-like values are escaped for spreadsheet use.
+Reset event counters requires typing RESET EVENT. It permanently deletes visits, entries, the winner and shipping records in one transaction, and reopens the draw for a fresh event. Export first if records are needed. Attendees must reload the entry page. No live reset was performed during development; reset was verified against synthetic local data.
+Entry and location posters now use the actual supplied purple/turquoise prize photo, not generated artwork.
+
 
 
