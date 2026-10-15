@@ -6,8 +6,20 @@ export default {async fetch(req,env){
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
  const path=new URL(req.url).pathname;
  try{
- if(['/stats','/draw','/attendees','/fulfilment'].includes(path)){
+ if(['/stats','/draw','/attendees','/fulfilment','/export','/reset'].includes(path)){
   if(!env.ADMIN_TOKEN||req.headers.get('Authorization')!=='Bearer '+env.ADMIN_TOKEN)return reply({error:'Incorrect dashboard password.'},401);
+  if(path==='/export'&&req.method==='GET'){
+   const result=await env.DB.prepare('SELECT v.created_at AS visit_time,v.source,v.ua AS user_agent,v.model,e.nickname AS name,e.size,e.created_at AS entry_time,CASE WHEN e.sid IS NULL THEN 0 ELSE 1 END AS completed FROM visits v LEFT JOIN entries e ON e.sid=v.sid ORDER BY v.created_at,v.rowid').all();
+   return reply({exportedAt:new Date().toISOString(),rows:result.results});
+  }
+  if(path==='/reset'&&req.method==='POST'){
+   if(req.headers.get('Origin')!==env.ALLOWED_ORIGIN)return reply({error:'Origin not allowed'},403);
+   const raw=await req.text();if(raw.length>200)return reply({error:'Invalid confirmation'},400);
+   let confirmation;try{confirmation=JSON.parse(raw).confirmation}catch{return reply({error:'Invalid confirmation'},400)}
+   if(confirmation!=='RESET EVENT')return reply({error:'Type RESET EVENT to confirm permanent deletion.'},400);
+   await env.DB.batch(['DELETE FROM shipping','DELETE FROM winner','DELETE FROM entries','DELETE FROM visits'].map(sql=>env.DB.prepare(sql)));
+   return reply({ok:true});
+  }
   if(path==='/attendees'&&req.method==='GET'){
    const rows=await env.DB.prepare('SELECT e.nickname AS name,e.size,v.ua,v.model,v.source,v.created_at AS time,CASE WHEN e.sid IS NULL THEN 0 ELSE 1 END AS completed FROM visits v LEFT JOIN entries e ON e.sid=v.sid ORDER BY v.created_at DESC,v.rowid DESC LIMIT 500').all();
    return reply({attendees:rows.results});
