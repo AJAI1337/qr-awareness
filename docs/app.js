@@ -1,0 +1,10 @@
+const $=id=>document.getElementById(id);const cfg=window.CONFIG;const preview=new URLSearchParams(location.search).has('preview');
+for(const key of ['title','draw','retention','organiser'])$(key).textContent=cfg[key];
+let sid;try{sid=sessionStorage.getItem('qr-session');if(!sid){sid=crypto.randomUUID();sessionStorage.setItem('qr-session',sid)}}catch{sid=crypto.randomUUID()}
+const source=(new URLSearchParams(location.search).get('source')||'unlabelled').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40)||'unlabelled';
+async function api(path,data){if(!cfg.api)throw Error('Live entries are not connected yet. Please try again when the organiser opens the draw.');const r=await fetch(cfg.api+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await r.json();if(!r.ok)throw Error(result.error||'Connection failed. Please try again.');return result}
+async function device(){let model='Unavailable';try{const hints=await navigator.userAgentData?.getHighEntropyValues(['model']);if(hints?.model)model=hints.model}catch{}return{ua:navigator.userAgent.slice(0,500),model}}
+const visit=preview?Promise.resolve():device().then(d=>api('/visit',{sid,source,...d}));
+visit.catch(e=>{$('status').textContent=e.message;$('status').className='error'});
+if(preview)$('status').textContent='PREVIEW ONLY — no visits or entries are saved.';
+$('form').addEventListener('submit',async e=>{e.preventDefault();$('submit').disabled=true;try{await visit;const result=preview?{claim:'DEMO-1234'}:await api('/entry',{sid,nickname:$('nickname').value.trim(),team:$('team').value,size:$('size').value,consent:true});$('claim').textContent=result.claim;$('entry').classList.add('hidden');$('success').classList.remove('hidden');$('status').textContent=preview?'Preview entry only; not in the real draw.':''}catch(err){$('status').textContent=err.message;$('status').className='error'}finally{$('submit').disabled=false}});
