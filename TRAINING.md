@@ -18,7 +18,7 @@ The password-protected local admin shows consent-based aggregate opened/complete
 
 On `qr.html`, enter the deployed training site's absolute URL including its repository/subdirectory path. QRCode.js creates codes locally. Slides use that same saved URL in the same browser. A localhost QR cannot be reached by an audience phone.
 
-The static files are proposed on the GitHub branch `codex/phishing-simulation`. No live deployment has been made. The repository remains `qr-awareness`. Its Cloudflare backend is separate and is not used by this studio. The new static pages can run on GitHub Pages, but the Python admin service cannot. Production backend deployment, repository renaming and live replacement remain separate work.
+The static files are proposed on the GitHub branch `codex/phishing-simulation`. The labelled static studio is deployed at https://phishing-simulation.affiqaijuzaily.workers.dev/. Its admin backend remains local-only. The repository remains `qr-awareness`. Its Cloudflare backend is separate and is not used by this studio. The new static pages can run on GitHub Pages, but the Python admin service cannot. Production backend deployment, repository renaming and live replacement remain separate work.
 
 ## Source and licenses
 
